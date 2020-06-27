@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
   @override
@@ -11,7 +13,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   static LatLng _center;
   MapType _currentMapType = MapType.normal;
-  final Set<Marker> _markers = {};
+   Set<Marker> _markers = {};
   LatLng _lastMapPosition = _center;
   double _zoom = 14.0;
   CameraPosition _cameraPosition = CameraPosition(target: LatLng(0.0, 0.0));
@@ -61,6 +63,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void addMarker(LatLng val) async {
+    _markers={};
     List<Placemark> p = await Geolocator()
         .placemarkFromCoordinates(val.latitude, val.longitude);
     Placemark place = p[0];
@@ -107,7 +110,8 @@ class _HomePageState extends State<HomePage> {
     Position startCoordinates = _startAddress == _currentAddress
         ? Position(
             latitude: _currentPosition.latitude,
-            longitude: _currentPosition.longitude)
+            longitude: _currentPosition.longitude,
+          )
         : startPlacement[0].position;
 
     Position destinationCoordinates = destinationPlacement[0].position;
@@ -142,6 +146,17 @@ class _HomePageState extends State<HomePage> {
 
     print('START COORDINATES: $startCoordinates');
     print('DESTINATION COORDINATES: $destinationCoordinates');
+    var routes=await getRouteCoordinates(startCoordinates, destinationCoordinates);
+  }
+
+  Future<String> getRouteCoordinates(Position start, Position dest) async {
+    String url =
+        "https://maps.googleapis.com/maps/api/directions/json?origin=${start.latitude},${start.longitude}&destination=${dest.latitude},${dest.longitude}&key=AIzaSyDenAkLdzHrXe-EB_pLkMxyvbw0DuTLn8k";
+    http.Response response = await http.get(url);
+    Map values = jsonDecode(response.body);
+    print(values);
+    // print(values["routes"][0]["overview_polyline"]["points"]);
+    // return values["routes"][0]["overview_polyline"]["points"];
   }
 
   @override
